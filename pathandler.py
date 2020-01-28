@@ -1,4 +1,5 @@
 import shutil
+from typing import Union, Optional
 from datetime import datetime
 from pathlib import Path
 
@@ -18,9 +19,8 @@ def unique_filename(filenumber: list):
 
 #if file in destination folder have same name as event file, 
 #func will rename it and move to the destination folder
-def move_renamed_file(src_path: str, path_destination: str):
-    path = Path(src_path)
-    fileformat = path.suffix
+def move_renamed_file(src_path: Union[str, Path], path_destination: Union[str, Path]):
+    fileformat = Path(src_path).suffix
     new_filename = unique_filename(filenumber)
     new_path_to_file = Path(path_destination).joinpath(f"{new_filename}{fileformat}")
     return (
@@ -29,29 +29,16 @@ def move_renamed_file(src_path: str, path_destination: str):
             )
 
 
-#checking if event file have image's format if True,
-#folder for images will created and event file will moved to created folder
-def move_to_image_dir(src_path: str, path_destination: str, img_formats: list, temporary_formats: list):
-    path = Path(src_path)
-    filename, fileformat = path.name, path.suffix
-    if not fileformat in temporary_formats:
-        if fileformat in img_formats:
-            new_path_to_file = Path(path_destination).joinpath('Images')
+def move_to_folder(src_path: Union[str, Path], dst_path: Union[str, Path], folder_name: Optional[str]=None):
+    if not folder_name is None:
+        new_path_to_file = Path(dst_path).joinpath(folder_name)
+        if not new_path_to_file.exists():
             new_path_to_file.mkdir(exist_ok=True)
-            try:
-                return (
-                    shutil.move(src_path, new_path_to_file),
-                    print(f"MOVED: [{src_path}] --> [{new_path_to_file}/{filename}]")
-                    )
-            except (shutil.Error, FileExistsError):
-                return move_renamed_file(src_path, str(new_path_to_file))
-        else:
-            new_path_to_file = Path(path_destination).joinpath(fileformat.upper())
-            new_path_to_file.mkdir(exist_ok=True)
-            try:
-                return (
-                    shutil.move(src_path, new_path_to_file),
-                    print(f"MOVED: [{src_path}] --> [{path_destination}/{filename}]")
-                    )
-            except (shutil.Error, FileExistsError):
-                return move_renamed_file(src_path, str(new_path_to_file))
+        try:
+            return (
+                shutil.move(src_path, new_path_to_file),
+                print(f"MOVED: [{src_path}] --> [{new_path_to_file}]")
+            )
+        except (shutil.Error, FileExistsError):
+            return move_renamed_file(src_path, new_path_to_file)
+    shutil.move(src_path, dst_path)
